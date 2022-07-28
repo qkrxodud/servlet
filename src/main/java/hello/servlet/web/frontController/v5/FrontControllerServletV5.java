@@ -1,12 +1,11 @@
 package hello.servlet.web.frontController.v5;
 
-import hello.servlet.web.frontController.v2.controller.MemberSaveControllerV2;
+import hello.servlet.web.frontController.ModelView;
+import hello.servlet.web.frontController.MyView;
 import hello.servlet.web.frontController.v3.Controller.MemberFormControllerV3;
 import hello.servlet.web.frontController.v3.Controller.MemberListControllerV3;
 import hello.servlet.web.frontController.v3.Controller.MemberSaveControllerV3;
-import hello.servlet.web.frontController.v4.controller.MemberFormControllerV4;
 import hello.servlet.web.frontController.v5.adapter.ControllerV3HandlerAdapter;
-import org.springframework.web.servlet.HandlerAdapter;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,7 +33,7 @@ public class FrontControllerServletV5 extends HttpServlet {
     private void initHandlerMappingMap() {
         handleMappingMap.put("/front-controller/v5/v3/members/new-form", new MemberFormControllerV3());
         handleMappingMap.put("/front-controller/v5/v3/members/save", new MemberSaveControllerV3());
-        handleMappingMap.put("/front-controller/v5/v3/members/members", new MemberListControllerV3());
+        handleMappingMap.put("/front-controller/v5/v3/members", new MemberListControllerV3());
     }
 
     private void initHandlerAdapters() {
@@ -54,8 +53,13 @@ public class FrontControllerServletV5 extends HttpServlet {
         //해당하는 컨트롤러의 어댑터를 가져온다. ControllerV3HandlerAdapter()
         MyHandlerAdapter adpAdapter = getHandlerAdapter(handler);
 
-        //어댑터를 통해서 파라미터를 전달하고, 핸들러(컨트롤러)를 전달해서 프로세스를 처리한다.
-        adpAdapter.handle(req, resp, handler);
+        //파라미터를 전달하고, 핸들러(컨트롤러)를 전달해서 컨트롤러의 프로세스를 처리 한후 ModelView를 받는다.
+        ModelView mv = adpAdapter.handle(req, resp, handler);
+
+        // 뷰 리졸버를 통해서 물리데이터를 논리데이터로 변경한다.
+        MyView myView = viewResolver(mv.getViewName());
+        // 이후 데이터를 랜더링 한 후 화면에 뿌려준다.
+        myView.render(mv.getModel(), req, resp);
     }
 
 
@@ -71,5 +75,9 @@ public class FrontControllerServletV5 extends HttpServlet {
     private Object getHandler(HttpServletRequest req) {
         String requestURI = req.getRequestURI();
         return handleMappingMap.get(requestURI);
+    }
+
+    private MyView viewResolver(String viewName) {
+        return new MyView("/WEB-INF/views/" + viewName + ".jsp");
     }
 }
